@@ -11,6 +11,8 @@ from typing import Any
 
 from v2hub.core.retry import RetryConfig, with_async_retry
 from v2hub.http.client import HTTPClient
+from v2hub import __api_version__
+
 from .auth import AdminAuthenticator
 from .models import (
     UserResponse,
@@ -180,7 +182,7 @@ class AsyncAdminClient:
         request = UserCreateRequest(user_id=user_id)
         response = await self._request(
             "POST",
-            "/api/v1/admin/users",
+            f"/api/{__api_version__}/admin/users",
             request.model_dump(mode="json"),
         )
         return UserCreateResponse(**response)
@@ -202,7 +204,7 @@ class AsyncAdminClient:
         """
         response = await self._request(
             "GET",
-            f"/api/v1/admin/users/{user_id}",
+            f"/api/{__api_version__}/admin/users/{user_id}",
         )
         return UserResponse(**response)
 
@@ -220,7 +222,7 @@ class AsyncAdminClient:
         """
         await self._request(
             "DELETE",
-            f"/api/v1/admin/users/{user_id}",
+            f"/api/{__api_version__}/admin/users/{user_id}",
         )
     
     @with_async_retry()
@@ -247,7 +249,7 @@ class AsyncAdminClient:
         request = UserStatusUpdateRequest(is_active=is_active)
         response = await self._request(
             "PATCH",
-            f"/api/v1/admin/users/{user_id}/status",
+            f"/api/{__api_version__}/admin/users/{user_id}/status",
             request.model_dump(mode="json"),
         )
         return UserResponse(**response)
@@ -274,7 +276,7 @@ class AsyncAdminClient:
         request = TokenRefreshRequest(user_id=user_id)
         response = await self._request(
             "POST",
-            "/api/v1/admin/users/refresh-token",
+            f"/api/{__api_version__}/admin/users/refresh-token",
             request.model_dump(mode="json"),
         )
         return TokenRefreshResponse(**response)
@@ -318,7 +320,7 @@ class AsyncAdminClient:
         )
         response = await self._request(
             "POST",
-            "/api/v1/admin/bans",
+            f"/api/{__api_version__}/admin/bans",
             request.model_dump(mode="json", exclude_none=True),
         )
         return IPBanStatusResponse(**response)
@@ -347,7 +349,7 @@ class AsyncAdminClient:
         request = IPUnbanRequest(ip_address=ip_address)
         response = await self._request(
             "DELETE",
-            "/api/v1/admin/bans",
+            f"/api/{__api_version__}/admin/bans",
             request.model_dump(mode="json"),
         )
         return IPUnbanResponse(**response)
@@ -376,7 +378,7 @@ class AsyncAdminClient:
         """
         response = await self._request(
             "GET",
-            f"/api/v1/admin/bans/{ip_address}",
+            f"/api/{__api_version__}/admin/bans/{ip_address}",
         )
         return IPBanStatusResponse(**response)
 
@@ -397,7 +399,7 @@ class AsyncAdminClient:
             for ban in bans.entries:
                 print(f"  {ban.ip_address} until {ban.banned_until}")
         """
-        response = await self._request("GET", "/api/v1/admin/bans")
+        response = await self._request("GET", f"/api/{__api_version__}/admin/bans")
         return IPBanListResponse(**response)
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -437,7 +439,7 @@ class AsyncAdminClient:
         )
         response = await self._request(
             "POST",
-            "/api/v1/admin/whitelist",
+            f"/api/{__api_version__}/admin/whitelist",
             request.model_dump(mode="json", exclude_none=True),
         )
         return WhitelistAddResponse(**response)
@@ -466,7 +468,7 @@ class AsyncAdminClient:
         request = WhitelistRemoveRequest(ip_address=ip_address)
         response = await self._request(
             "DELETE",
-            "/api/v1/admin/whitelist",
+            f"/api/{__api_version__}/admin/whitelist",
             request.model_dump(mode="json"),
         )
         return WhitelistRemoveResponse(**response)
@@ -489,5 +491,5 @@ class AsyncAdminClient:
                 print(f"  {entry.ip_address}: {entry.description}")
                 print(f"    Added: {entry.added_at}")
         """
-        response = await self._request("GET", "/api/v1/admin/whitelist")
+        response = await self._request("GET", f"/api/{__api_version__}/admin/whitelist")
         return WhitelistListResponse(**response)
