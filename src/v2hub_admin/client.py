@@ -1,4 +1,3 @@
-
 """
 Synchronous VPN Subscription API client.
 
@@ -8,26 +7,30 @@ Sync wrapper with proper event loop management.
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from .async_client import AsyncAdminClient
-from v2hub.core.retry import RetryConfig
-from .models import (
-    UserResponse,
-    IPBanListResponse,
-    IPBanStatusResponse,
-    TokenRefreshResponse,
-    IPUnbanResponse,
-    UserCreateResponse,
-    WhitelistAddResponse,
-    WhitelistListResponse,
-    WhitelistRemoveResponse,
-)
 
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
 
+    from v2hub.core.retry import RetryConfig
+
+    from .models import (
+        IPBanListResponse,
+        IPBanStatusResponse,
+        IPUnbanResponse,
+        TokenRefreshResponse,
+        UserCreateResponse,
+        UserResponse,
+        WhitelistAddResponse,
+        WhitelistListResponse,
+        WhitelistRemoveResponse,
+    )
 
 __all__ = ["AdminClient"]
 
+T = TypeVar("T")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Sync VPN Client
@@ -61,6 +64,7 @@ class AdminClient:
             # Add to whitelist
             client.add_to_whitelist("10.0.0.0/24", "Office network")
     """
+
     def __init__(
         self,
         base_url: str,
@@ -68,7 +72,6 @@ class AdminClient:
         timeout: float = 30.0,
         retry_config: RetryConfig | None = None,
     ) -> None:
-
         """
         Initialize admin API client.
 
@@ -87,7 +90,7 @@ class AdminClient:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._owned_loop = False
 
-    def __enter__(self) -> "AdminClient":
+    def __enter__(self) -> AdminClient:
         """Context manager entry."""
         self._loop = asyncio.new_event_loop()
         self._owned_loop = True
@@ -103,7 +106,7 @@ class AdminClient:
             self._loop = None
             self._owned_loop = False
 
-    def _run(self, coro: Any) -> Any:
+    def _run(self, coro: Coroutine[Any, Any, T]) -> T:
         """
         Run async coroutine synchronously.
 
@@ -144,17 +147,16 @@ class AdminClient:
         """
         return self._run(self._async_client.create_user(user_id))
 
-
     def get_user(self, user_id: int) -> UserResponse:
         """
         Get user info.
-    
+
         Args:
             user_id: External user ID
-    
+
         Returns:
             User data
-    
+
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
@@ -164,16 +166,16 @@ class AdminClient:
     def delete_user(self, user_id: int) -> None:
         """
         Delete user account.
-    
+
         Args:
             user_id: External user ID
-    
+
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
         """
         return self._run(self._async_client.delete_user(user_id))
-    
+
     def set_user_status(
         self,
         user_id: int,
@@ -181,21 +183,20 @@ class AdminClient:
     ) -> UserResponse:
         """
         Update user active status.
-    
+
         Args:
             user_id: External user ID
             is_active: True to activate, False to deactivate
-    
+
         Returns:
             Updated user data
-    
+
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
         """
 
         return self._run(self._async_client.set_user_status(user_id, is_active))
-
 
     def refresh_token(self, user_id: int) -> TokenRefreshResponse:
         """
@@ -217,7 +218,6 @@ class AdminClient:
         """
 
         return self._run(self._async_client.refresh_token(user_id))
-
 
     # ═══════════════════════════════════════════════════════════════════════
     # IP Ban Management
@@ -252,8 +252,9 @@ class AdminClient:
             ban = client.ban_ip("192.168.1.100")
         """
 
-        return self._run(self._async_client.ban_ip(ip_address=ip_address, duration_seconds=duration_seconds))
-
+        return self._run(
+            self._async_client.ban_ip(ip_address=ip_address, duration_seconds=duration_seconds)
+        )
 
     def unban_ip(self, ip_address: str) -> IPUnbanResponse:
         """
@@ -277,7 +278,6 @@ class AdminClient:
         """
 
         return self._run(self._async_client.unban_ip(ip_address))
-
 
     def get_ban_status(self, ip_address: str) -> IPBanStatusResponse:
         """
@@ -303,7 +303,6 @@ class AdminClient:
 
         return self._run(self._async_client.get_ban_status(ip_address))
 
-
     def get_ban_list(self) -> IPBanListResponse:
         """
         Get all banned IPs.
@@ -322,7 +321,6 @@ class AdminClient:
         """
 
         return self._run(self._async_client.get_ban_list())
-
 
     # ═══════════════════════════════════════════════════════════════════════
     # Whitelist Management
@@ -355,8 +353,9 @@ class AdminClient:
             print(result.message)
         """
 
-        return self._run(self._async_client.add_to_whitelist(ip_address=ip_address, description=description))
-
+        return self._run(
+            self._async_client.add_to_whitelist(ip_address=ip_address, description=description)
+        )
 
     def remove_from_whitelist(self, ip_address: str) -> WhitelistRemoveResponse:
         """
@@ -381,7 +380,6 @@ class AdminClient:
 
         return self._run(self._async_client.remove_from_whitelist(ip_address=ip_address))
 
-
     def list_whitelist(self) -> WhitelistListResponse:
         """
         Get all whitelisted IPs.
@@ -401,4 +399,3 @@ class AdminClient:
         """
 
         return self._run(self._async_client.list_whitelist())
-

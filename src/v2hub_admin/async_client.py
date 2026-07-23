@@ -9,22 +9,22 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from v2hub import __api_version__
 from v2hub.core.retry import RetryConfig, with_async_retry
 from v2hub.http.client import HTTPClient
-from v2hub import __api_version__
 
 from .auth import AdminAuthenticator
 from .models import (
-    UserResponse,
-    IPBanRequest,
     IPBanListResponse,
+    IPBanRequest,
     IPBanStatusResponse,
-    TokenRefreshRequest,
-    TokenRefreshResponse,
     IPUnbanRequest,
     IPUnbanResponse,
+    TokenRefreshRequest,
+    TokenRefreshResponse,
     UserCreateRequest,
     UserCreateResponse,
+    UserResponse,
     UserStatusUpdateRequest,
     WhitelistAddRequest,
     WhitelistAddResponse,
@@ -80,7 +80,6 @@ class AsyncAdminClient:
     ) -> None:
         """
         Initialize async admin API client.
-
         Args:
             base_url: API base URL (e.g., "https://api.example.com")
             secret_key: Admin secret key for HMAC authentication
@@ -101,7 +100,7 @@ class AsyncAdminClient:
             timeout=timeout,
         )
 
-    async def __aenter__(self) -> "AsyncAdminClient":
+    async def __aenter__(self) -> AsyncAdminClient:
         """Async context manager entry."""
         await self._http_client.connect()
         return self
@@ -126,12 +125,10 @@ class AsyncAdminClient:
     ) -> dict[str, Any]:
         """
         Make authenticated request to admin API.
-
         Args:
             method: HTTP method
             path: Request path
             data: Request data (will be JSON-encoded)
-
         Returns:
             Response data as dictionary
         """
@@ -165,15 +162,12 @@ class AsyncAdminClient:
 
         Args:
             user_id: External user ID (must be positive)
-
         Returns:
             User data with generated API token
-
         Raises:
             ValidationError: Invalid user_id
             ConflictError: User already exists
             AuthenticationError: Invalid admin secret key
-
         Example:
             user = await client.create_user(user_id=12345)
             print(f"API Token: {user.api_token}")
@@ -191,13 +185,10 @@ class AsyncAdminClient:
     async def get_user(self, user_id: int) -> UserResponse:
         """
         Get user info.
-    
         Args:
             user_id: External user ID
-    
         Returns:
             User data
-    
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
@@ -212,10 +203,8 @@ class AsyncAdminClient:
     async def delete_user(self, user_id: int) -> None:
         """
         Delete user account.
-    
         Args:
             user_id: External user ID
-    
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
@@ -224,7 +213,7 @@ class AsyncAdminClient:
             "DELETE",
             f"/api/{__api_version__}/admin/users/{user_id}",
         )
-    
+
     @with_async_retry()
     async def set_user_status(
         self,
@@ -233,14 +222,11 @@ class AsyncAdminClient:
     ) -> UserResponse:
         """
         Update user active status.
-    
         Args:
             user_id: External user ID
             is_active: True to activate, False to deactivate
-    
         Returns:
             Updated user data
-    
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
@@ -258,17 +244,13 @@ class AsyncAdminClient:
     async def refresh_token(self, user_id: int) -> TokenRefreshResponse:
         """
         Refresh user's API token.
-
         Args:
             user_id: User ID
-
         Returns:
             New token data
-
         Raises:
             NotFoundError: User not found
             AuthenticationError: Invalid admin secret key
-
         Example:
             result = await client.refresh_token(user_id=12345)
             print(f"New token: {result.new_api_token}")
@@ -293,18 +275,14 @@ class AsyncAdminClient:
     ) -> IPBanStatusResponse:
         """
         Ban IP address.
-
         Args:
             ip_address: IP address to ban
             duration_seconds: Ban duration in seconds (optional, uses default if not specified)
-
         Returns:
             Ban status with expiration time
-
         Raises:
             ValidationError: Invalid IP address
             AuthenticationError: Invalid admin secret key
-
         Example:
             # Ban for 1 hour
             ban = await client.ban_ip("192.168.1.100", duration_seconds=3600)
@@ -329,16 +307,12 @@ class AsyncAdminClient:
     async def unban_ip(self, ip_address: str) -> IPUnbanResponse:
         """
         Unban IP address.
-
         Args:
             ip_address: IP address to unban
-
         Returns:
             Unban result
-
         Raises:
             AuthenticationError: Invalid admin secret key
-
         Example:
             result = await client.unban_ip("192.168.1.100")
             if result.was_banned:
@@ -358,16 +332,12 @@ class AsyncAdminClient:
     async def get_ban_status(self, ip_address: str) -> IPBanStatusResponse:
         """
         Check IP ban status.
-
         Args:
             ip_address: IP address to check
-
         Returns:
             Ban status
-
         Raises:
             AuthenticationError: Invalid admin secret key
-
         Example:
             status = await client.get_ban_status("192.168.1.100")
             if status.is_banned:
@@ -386,13 +356,10 @@ class AsyncAdminClient:
     async def get_ban_list(self) -> IPBanListResponse:
         """
         Get all banned IPs.
-
         Returns:
             List of all bans
-
         Raises:
             AuthenticationError: Invalid admin secret key
-
         Example:
             bans = await client.get_ban_list()
             print(f"Total bans: {bans.total}")
@@ -414,18 +381,14 @@ class AsyncAdminClient:
     ) -> WhitelistAddResponse:
         """
         Add IP to whitelist.
-
         Args:
             ip_address: IP address or CIDR to whitelist
             description: Optional description
-
         Returns:
             Whitelist add result
-
         Raises:
             ValidationError: Invalid IP address/CIDR
             AuthenticationError: Invalid admin secret key
-
         Example:
             result = await client.add_to_whitelist(
                 "10.0.0.0/24",
@@ -448,16 +411,12 @@ class AsyncAdminClient:
     async def remove_from_whitelist(self, ip_address: str) -> WhitelistRemoveResponse:
         """
         Remove IP from whitelist.
-
         Args:
             ip_address: IP address to remove
-
         Returns:
             Whitelist remove result
-
         Raises:
             AuthenticationError: Invalid admin secret key
-
         Example:
             result = await client.remove_from_whitelist("10.0.0.0/24")
             if result.was_whitelisted:
@@ -477,13 +436,10 @@ class AsyncAdminClient:
     async def list_whitelist(self) -> WhitelistListResponse:
         """
         Get all whitelisted IPs.
-
         Returns:
             List of all whitelist entries
-
         Raises:
             AuthenticationError: Invalid admin secret key
-
         Example:
             whitelist = await client.list_whitelist()
             print(f"Total entries: {whitelist.total}")
