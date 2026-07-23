@@ -7,8 +7,8 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError, metadata, version
 
 try:
-    __version__ = version("v2hub")
-    __author__ = metadata("v2hub")["Author-email"]
+    __version__ = version("v2hub-admin")
+    __author__ = metadata("v2hub-admin")["Author-email"]
 except PackageNotFoundError:
     __version__ = "unknown"
     __author__ = "unknown"
