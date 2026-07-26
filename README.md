@@ -1,16 +1,20 @@
 # V2Hub Admin — Admin Extension for VPN Subscription API
 
-## Admin-расширение для V2Hub, предоставляющее привилегированные операции управления пользователями и IP через HMAC-SHA256 аутентификацию.
+Admin extension for V2Hub, providing privileged operations for user and IP management through HMAC-SHA256 authentication.
+
+### 🌐 Part of the [V2Hub Ecosystem](https://github.com/nestthub/nestthub/blob/main/ecosystems/v2hub/README.md)
+
+This package is one component of V2Hub — see the full project overview, architecture, and all related repositories.
 
 ## Features
 
-- 🔐 **HMAC Authentication** (SHA-256 подпись)
-- 👤 **User Management API** (CRUD пользователей)
+- 🔐 **HMAC Authentication** (SHA-256 signing)
+- 👤 **User Management API** (user CRUD)
 - 🚫 **IP Ban System**
 - ✅ **Whitelist Management**
-- 🔄 **Async & Sync клиенты**
-- 📦 Основан на `v2hub`
-- 🛡️ Полная типизация (type hints + Pydantic)
+- 🔄 **Async & Sync clients**
+- 📦 Built on top of `v2hub`
+- 🛡️ Fully typed (type hints + Pydantic)
 
 ---
 
@@ -33,7 +37,6 @@ async with AsyncAdminClient(
     base_url="https://api.example.com",
     secret_key="your-hmac-secret"
 ) as admin:
-
     user = await admin.get_user(12345)
     print(user)
 ```
@@ -49,7 +52,6 @@ with AdminClient(
     base_url="https://api.example.com",
     secret_key="your-hmac-secret"
 ) as admin:
-
     user = admin.get_user(12345)
     print(user)
 ```
@@ -123,7 +125,7 @@ for entry in whitelist.entries:
 
 ## ⚠️ Error Handling
 
-Все ошибки наследуются из `v2hub`:
+All errors inherit from `v2hub`:
 
 ```python
 from v2hub import VPNAPIError, AuthenticationError, AuthorizationError
@@ -144,7 +146,6 @@ except VPNAPIError as e:
 
 ```bash
 pip install -e ".[dev]"
-
 pytest
 mypy src/
 ```
@@ -160,21 +161,19 @@ mypy src/
 
 ## Security Notes
 
-⚠️ Важно:
+⚠️ Important:
 
-- Не храните secret_key в коде
-- Используйте env / secret managers
-- Только HTTPS в production
-- Регулярно ротируйте ключи
-- Admin API имеет полный доступ к системе
+- Do not hardcode `secret_key` in source code
+- Use environment variables / secret managers
+- HTTPS only in production
+- Rotate keys regularly
+- The Admin API has full access to the system
 
 ---
 
 ## License
 
 MIT
-
----
 
 ## Author
 
