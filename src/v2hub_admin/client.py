@@ -17,9 +17,13 @@ if TYPE_CHECKING:
     from v2hub.core.retry import RetryConfig
 
     from .models import (
+        AllProvidersResponse,
         IPBanListResponse,
         IPBanStatusResponse,
         IPUnbanResponse,
+        ProviderCreateResponse,
+        ProviderResponse,
+        ProviderTokenRefreshResponse,
         TokenRefreshResponse,
         UserCreateResponse,
         UserResponse,
@@ -218,6 +222,231 @@ class AdminClient:
         """
 
         return self._run(self._async_client.refresh_token(user_id))
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # Provider Management
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def get_providers(self) -> AllProvidersResponse:
+        """
+        Get all providers.
+
+        Returns:
+            Provider names mapped to provider hashes.
+
+        Raises:
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            providers = client.get_providers()
+            for name, provider_hash in providers.provider_hashes.items():
+                print(f"{name}: {provider_hash}")
+        """
+        return self._run(self._async_client.get_providers())
+
+    def create_provider(
+        self,
+        owner_hash: str,
+        provider_name: str,
+        provider_url: str | None = None,
+    ) -> ProviderCreateResponse:
+        """
+        Create a new provider account.
+
+        Args:
+            owner_hash: Provider owner's hash.
+            provider_name: Provider name.
+            provider_url: Optional provider URL.
+
+        Returns:
+            Created provider data with generated API token.
+
+        Raises:
+            ValidationError: Invalid provider data.
+            ConflictError: Provider already exists.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            provider = client.create_provider(
+                owner_hash="a1b2c3d4e5f6...",
+                provider_name="vpn123",
+                provider_url="https://example.com",
+            )
+            print(f"Provider hash: {provider.provider_hash}")
+            print(f"API token: {provider.api_token}")
+        """
+        return self._run(
+            self._async_client.create_provider(
+                owner_hash=owner_hash,
+                provider_name=provider_name,
+                provider_url=provider_url,
+            )
+        )
+
+    def get_provider(self, provider_hash: str) -> ProviderResponse:
+        """
+        Get provider information.
+
+        Args:
+            provider_hash: Provider hash.
+
+        Returns:
+            Provider data.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            provider = client.get_provider("a1b2c3d4e5f6...")
+            print(provider.provider_name)
+            print(provider.api_token)
+        """
+        return self._run(self._async_client.get_provider(provider_hash))
+
+    def delete_provider(self, provider_hash: str) -> None:
+        """
+        Delete a provider account.
+
+        Args:
+            provider_hash: Provider hash.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            client.delete_provider("a1b2c3d4e5f6...")
+        """
+        return self._run(self._async_client.delete_provider(provider_hash))
+
+    def set_provider_status(
+        self,
+        provider_hash: str,
+        is_active: bool,
+    ) -> ProviderResponse:
+        """
+        Update provider active status.
+
+        Args:
+            provider_hash: Provider hash.
+            is_active: True to activate, False to deactivate.
+
+        Returns:
+            Updated provider data.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            provider = client.set_provider_status(
+                provider_hash="a1b2c3d4e5f6...",
+                is_active=False,
+            )
+            print(provider.is_active)
+        """
+        return self._run(
+            self._async_client.set_provider_status(
+                provider_hash=provider_hash,
+                is_active=is_active,
+            )
+        )
+
+    def update_provider_url(
+        self,
+        provider_hash: str,
+        provider_url: str | None,
+    ) -> ProviderResponse:
+        """
+        Update provider URL.
+
+        Args:
+            provider_hash: Provider hash.
+            provider_url: New provider URL.
+
+        Returns:
+            Updated provider data.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            provider = client.update_provider_url(
+                provider_hash="a1b2c3d4e5f6...",
+                provider_url="https://example.com",
+            )
+        """
+        return self._run(
+            self._async_client.update_provider_url(
+                provider_hash=provider_hash,
+                provider_url=provider_url,
+            )
+        )
+
+    def update_provider_name(
+        self,
+        provider_hash: str,
+        provider_name: str,
+    ) -> ProviderResponse:
+        """
+        Update provider name.
+
+        Args:
+            provider_hash: Provider hash.
+            provider_name: New provider name.
+
+        Returns:
+            Updated provider data.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            provider = client.update_provider_name(
+                provider_hash="a1b2c3d4e5f6...",
+                provider_name="vpn123",
+            )
+        """
+        return self._run(
+            self._async_client.update_provider_name(
+                provider_hash=provider_hash,
+                provider_name=provider_name,
+            )
+        )
+
+    def refresh_provider_token(
+        self,
+        provider_hash: str,
+    ) -> ProviderTokenRefreshResponse:
+        """
+        Refresh provider API token.
+
+        The old token is invalidated and a new unique token is generated.
+
+        Args:
+            provider_hash: Provider hash.
+
+        Returns:
+            New provider API token.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+
+        Example:
+            result = client.refresh_provider_token(
+                provider_hash="a1b2c3d4e5f6...",
+            )
+            print(f"New token: {result.new_api_token}")
+        """
+        return self._run(
+            self._async_client.refresh_provider_token(
+                provider_hash=provider_hash,
+            )
+        )
 
     # ═══════════════════════════════════════════════════════════════════════
     # IP Ban Management
