@@ -7,12 +7,13 @@ Sync wrapper with proper event loop management.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 from .async_client import AsyncAdminClient
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine
+    from datetime import datetime
 
     from v2hub.core.retry import RetryConfig
 
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
         ProviderCreateResponse,
         ProviderResponse,
         ProviderTokenRefreshResponse,
+        StatsResponse,
         TokenRefreshResponse,
         UserCreateResponse,
         UserResponse,
@@ -628,3 +630,32 @@ class AdminClient:
         """
 
         return self._run(self._async_client.list_whitelist())
+
+    def get_stats(
+        self,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        period: Literal["day", "week", "month"] | None = None,
+    ) -> StatsResponse:
+        """
+        Get API usage statistics.
+
+        Args:
+            start_date: Optional start date (ISO 8601).
+            end_date: Optional end date (ISO 8601).
+            period: Optional predefined period: day, week, or month.
+
+        Returns:
+            Aggregated API usage statistics.
+
+        Raises:
+            AuthenticationError: Invalid admin secret key.
+        """
+
+        return self._run(
+            self._async_client.get_stats(
+                start_date=start_date,
+                end_date=end_date,
+                period=period,
+            )
+        )

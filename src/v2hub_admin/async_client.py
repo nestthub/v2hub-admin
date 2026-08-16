@@ -6,8 +6,10 @@ Production-grade async client for VPN Subscription API admin endpoints.
 
 from __future__ import annotations
 
+import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
+from urllib.parse import urlencode
 
 from v2hub import __api_version__
 from v2hub.core.retry import RetryConfig, with_async_retry
@@ -29,6 +31,7 @@ from .models import (
     ProviderTokenRefreshRequest,
     ProviderTokenRefreshResponse,
     ProviderURLUpdateRequest,
+    StatsResponse,
     TokenRefreshRequest,
     TokenRefreshResponse,
     UserCreateRequest,
@@ -41,6 +44,9 @@ from .models import (
     WhitelistRemoveRequest,
     WhitelistRemoveResponse,
 )
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -131,25 +137,33 @@ class AsyncAdminClient:
         method: str,
         path: str,
         data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Make authenticated request to admin API.
+
         Args:
             method: HTTP method
             path: Request path
-            data: Request data (will be JSON-encoded)
+            data: Request body data (will be JSON-encoded)
+            params: Query parameters
+
         Returns:
             Response data as dictionary
         """
-        # Prepare body
-        import json
+
+        if params:
+            query = urlencode({key: value for key, value in params.items() if value is not None})
+            path = f"{path}?{query}"
 
         body = json.dumps(data) if data else ""
 
-        # Generate signature headers
-        auth_headers = self._authenticator.sign_request(method, path, body)
+        auth_headers = self._authenticator.sign_request(
+            method,
+            path,
+            body,
+        )
 
-        # Make request with signature headers
         response = await self._http_client.request(
             method=method,
             path=path,
@@ -157,7 +171,6 @@ class AsyncAdminClient:
             content=body.encode("utf-8") if body else None,
         )
 
-        # Parse response
         return response.json() if response.content else {}
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -727,3 +740,35 @@ class AsyncAdminClient:
         """
         response = await self._request("GET", f"/api/{__api_version__}/admin/whitelist")
         return WhitelistListResponse(**response)
+
+    @with_async_retry()
+    async def get_stats(
+        self,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        period: Literal["day", "week", "month"] | None = None,
+    ) -> StatsResponse:
+        """
+        Get API usage statistics.
+
+        Args:
+            start_date: Optional start date (ISO 8601).
+            end_date: Optional end date (ISO 8601).
+            period: Optional predefined period: day, week, or month.
+
+        Returns:
+            Aggregated API usage statistics.
+        """
+        params = {
+            "start_date": start_date.isoformat() if start_date else None,
+            "end_date": end_date.isoformat() if end_date else None,
+            "period": period,
+        }
+
+        response = await self._request(
+            "GET",
+            f"/api/{__api_version__}/admin/stats",
+            params=params,
+        )
+
+        return StatsResponse(**response)

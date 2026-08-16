@@ -1,6 +1,6 @@
 # V2Hub Admin — Admin Extension for VPN Subscription API
 
-Admin extension for V2Hub, providing privileged operations for user and IP management through HMAC-SHA256 authentication.
+Admin extension for V2Hub, providing privileged operations for user, provider, and IP management through HMAC-SHA256 authentication.
 
 ### 🌐 Part of the [V2Hub Ecosystem](https://github.com/nestthub/nestthub/blob/main/ecosystems/v2hub/README.md)
 
@@ -10,6 +10,8 @@ This package is one component of V2Hub — see the full project overview, archit
 
 - 🔐 **HMAC Authentication** (SHA-256 signing)
 - 👤 **User Management API** (user CRUD)
+- 🤝 **Provider Management API** (provider CRUD, status, URL/name updates, token refresh)
+- 📊 **Usage Statistics API** (aggregated stats by date range or period)
 - 🚫 **IP Ban System**
 - ✅ **Whitelist Management**
 - 🔄 **Async & Sync clients**
@@ -82,6 +84,45 @@ print(user.is_active)
 
 ---
 
+## 🤝 Provider Management
+
+```python
+admin.create_provider(owner_hash: str, provider_name: str, provider_url: str | None = None)
+admin.get_provider(provider_hash: str)
+admin.get_providers()
+admin.delete_provider(provider_hash: str)
+admin.set_provider_status(provider_hash: str, is_active: bool)
+admin.update_provider_url(provider_hash: str, provider_url: str | None)
+admin.update_provider_name(provider_hash: str, provider_name: str)
+admin.refresh_provider_token(provider_hash: str)
+```
+
+Providers are external services (e.g. bots, resellers) that manage subscriptions on behalf of end-users via `v2hub`'s `as_provider_for_user_id=` argument. This section covers the _admin_-side lifecycle of provider accounts themselves — creating them, rotating their tokens, enabling/disabling them.
+
+### Example
+
+```python
+provider = admin.create_provider(
+    owner_hash="a1b2c3d4e5f6...",
+    provider_name="vpn123",
+    provider_url="https://t.me/examplebot",
+)
+print(provider.provider_hash)
+print(provider.api_token)
+
+providers = admin.get_providers()
+for name, provider_hash in providers.provider_hashes.items():
+    print(name, provider_hash)
+
+provider = admin.set_provider_status(provider.provider_hash, False)
+print(provider.is_active)
+
+result = admin.refresh_provider_token(provider.provider_hash)
+print(result.new_api_token)
+```
+
+---
+
 ## 🚫 IP Ban Management
 
 ```python
@@ -123,6 +164,35 @@ for entry in whitelist.entries:
 
 ---
 
+## 📊 Usage Statistics
+
+```python
+admin.get_stats(
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    period: Literal["day", "week", "month"] | None = None,
+)
+```
+
+Get aggregated API usage statistics. Pass an explicit `start_date`/`end_date` range, a predefined `period` (`"day"`, `"week"`, or `"month"`), or omit all arguments to use the API's default range.
+
+### Example
+
+```python
+from datetime import datetime, timedelta
+
+# Predefined period
+stats = admin.get_stats(period="week")
+
+# Explicit date range
+stats = admin.get_stats(
+    start_date=datetime.now() - timedelta(days=30),
+    end_date=datetime.now(),
+)
+```
+
+---
+
 ## ⚠️ Error Handling
 
 All errors inherit from `v2hub`:
@@ -155,7 +225,7 @@ mypy src/
 ## Requirements
 
 - Python >= 3.9
-- v2hub >= 1.0.0
+- v2hub >= 1.1.1
 
 ---
 
