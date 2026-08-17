@@ -154,7 +154,8 @@ class AsyncAdminClient:
 
         if params:
             query = urlencode({key: value for key, value in params.items() if value is not None})
-            path = f"{path}?{query}"
+            if query:
+                path = f"{path}?{query}"
 
         body = json.dumps(data) if data else ""
 
