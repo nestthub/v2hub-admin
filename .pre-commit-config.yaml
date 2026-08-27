@@ -25,7 +25,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - v2hub>=1.0.8
+          - v2hub>=1.1.2
           - pydantic>=2.0.0
           - pydantic-settings>=2.0.0
           - httpx>=0.25.0

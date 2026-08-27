@@ -11,6 +11,7 @@ This package is one component of V2Hub — see the full project overview, archit
 - 🔐 **HMAC Authentication** (SHA-256 signing)
 - 👤 **User Management API** (user CRUD)
 - 🤝 **Provider Management API** (provider CRUD, status, URL/name updates, token refresh)
+- 🔑 **Provider Authorization API** (approve/reject provider access to a user's subscriptions)
 - 📊 **Usage Statistics API** (aggregated stats by date range or period)
 - 🚫 **IP Ban System**
 - ✅ **Whitelist Management**
@@ -123,6 +124,51 @@ print(result.new_api_token)
 
 ---
 
+## 🔑 Provider Authorization Management
+
+```python
+admin.get_provider_authorization(provider_name: str, user_id: int)
+admin.process_provider_authorization(user_id: int, provider_name: str, hmac: str | None = None)
+admin.approve_provider_authorization(user_id: int, provider_name: str)
+admin.reject_provider_authorization(user_id: int, provider_name: str)
+```
+
+Providers request access to manage a specific user's subscriptions via an HMAC-signed connection invite. This section covers the admin-side authorization handshake: inspecting the current state, processing an incoming request, and approving or rejecting it.
+
+The typical flow is:
+
+1. A provider issues a connection invite to a user, producing an `hmac`.
+2. The invite is submitted via `process_provider_authorization(user_id, provider_name, hmac)`, creating a `PENDING` authorization.
+3. An admin approves or rejects it with `approve_provider_authorization` / `reject_provider_authorization`.
+4. `get_provider_authorization` can be used at any point to check the current status.
+
+### Example
+
+```python
+# Create/process an authorization from an issued HMAC
+auth = admin.process_provider_authorization(
+    user_id=12345,
+    provider_name="vpn123",
+    hmac="a1b2c3d4e5f6...",
+)
+print(auth.status)  # "pending"
+
+# Approve it (only PENDING authorizations can be approved)
+auth = admin.approve_provider_authorization(user_id=12345, provider_name="vpn123")
+print(auth.status)  # "approved"
+
+# Check status later
+auth = admin.get_provider_authorization("vpn123", 12345)
+print(auth.status)
+
+# Reject/revoke access
+admin.reject_provider_authorization(user_id=12345, provider_name="vpn123")
+```
+
+> **Note:** `approve_provider_authorization` and `reject_provider_authorization` only operate on `PENDING` authorizations and raise `ConflictError` otherwise — including when the server's provider-per-user limit has been reached.
+
+---
+
 ## 🚫 IP Ban Management
 
 ```python
@@ -224,8 +270,8 @@ mypy src/
 
 ## Requirements
 
-- Python >= 3.9
-- v2hub >= 1.1.1
+- Python >= 3.10
+- v2hub >= 1.1.2
 
 ---
 
@@ -238,6 +284,14 @@ mypy src/
 - HTTPS only in production
 - Rotate keys regularly
 - The Admin API has full access to the system
+
+---
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for release notes.
 
 ---
 

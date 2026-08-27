@@ -16,6 +16,12 @@ from .access_lists import (
     WhitelistRemoveRequest,
     WhitelistRemoveResponse,
 )
+from .provider_authorization import (
+    ProviderAuthorizationBaseRequest,
+    ProviderAuthorizationDecisionRequest,
+    ProviderAuthorizationInfoResponse,
+    ProviderAuthorizationRequest,
+)
 from .providers import (
     AllProvidersResponse,
     ProviderCreateRequest,
@@ -41,17 +47,18 @@ from .users import (
 )
 
 __all__ = [
-    # Provider management
     "AllProvidersResponse",
-    # Stat management
     "GeneralStats",
-    # IP ban management
     "IPBanEntry",
     "IPBanListResponse",
     "IPBanRequest",
     "IPBanStatusResponse",
     "IPUnbanRequest",
     "IPUnbanResponse",
+    "ProviderAuthorizationBaseRequest",
+    "ProviderAuthorizationDecisionRequest",
+    "ProviderAuthorizationInfoResponse",
+    "ProviderAuthorizationRequest",
     "ProviderCreateRequest",
     "ProviderCreateResponse",
     "ProviderNameUpdateRequest",
@@ -63,12 +70,10 @@ __all__ = [
     "StatsResponse",
     "TokenRefreshRequest",
     "TokenRefreshResponse",
-    # User management
     "UserCreateRequest",
     "UserCreateResponse",
     "UserResponse",
     "UserStatusUpdateRequest",
-    # Whitelist management
     "WhitelistAddRequest",
     "WhitelistAddResponse",
     "WhitelistEntry",

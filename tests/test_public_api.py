@@ -9,9 +9,12 @@ visible in the diff/changelog.
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import v2hub_admin
+
+if TYPE_CHECKING:
+    import pytest
 
 EXPECTED_EXPORTS = {
     "AdminClient",
@@ -35,6 +38,36 @@ class TestPublicAPISurface:
     def test_api_version_is_v1(self) -> None:
         # Bumping this changes every endpoint URL the clients call.
         assert v2hub_admin.__api_version__ == "v1"
+
+    def test_version_falls_back_to_unknown_when_package_not_installed(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        If package metadata can't be found (e.g. running from a source
+        checkout without an installed distribution), __version__ and
+        __author__ must fall back to "unknown" rather than raising.
+        """
+        import importlib
+        import sys
+        from importlib.metadata import PackageNotFoundError
+
+        def fake_version(_name: str) -> str:
+            raise PackageNotFoundError
+
+        def fake_metadata(_name: str) -> dict[str, str]:
+            raise PackageNotFoundError
+
+        monkeypatch.setattr("importlib.metadata.version", fake_version)
+        monkeypatch.setattr("importlib.metadata.metadata", fake_metadata)
+
+        sys.modules.pop("v2hub_admin", None)
+        try:
+            reloaded = importlib.import_module("v2hub_admin")
+            assert reloaded.__version__ == "unknown"
+            assert reloaded.__author__ == "unknown"
+        finally:
+            sys.modules.pop("v2hub_admin", None)
+            importlib.import_module("v2hub_admin")
 
     def test_async_client_is_the_full_featured_client(self) -> None:
         from v2hub_admin.async_client import AsyncAdminClient
@@ -60,6 +93,19 @@ class TestAsyncAdminClientMethodSurface:
         "delete_user",
         "set_user_status",
         "refresh_token",
+        "create_provider",
+        "get_provider",
+        "get_providers",
+        "delete_provider",
+        "set_provider_status",
+        "update_provider_url",
+        "update_provider_name",
+        "refresh_provider_token",
+        "get_provider_authorization",
+        "process_provider_authorization",
+        "approve_provider_authorization",
+        "reject_provider_authorization",
+        "get_stats",
         "ban_ip",
         "unban_ip",
         "get_ban_status",
@@ -90,6 +136,19 @@ class TestAdminClientMethodSurface:
         "delete_user",
         "set_user_status",
         "refresh_token",
+        "create_provider",
+        "get_provider",
+        "get_providers",
+        "delete_provider",
+        "set_provider_status",
+        "update_provider_url",
+        "update_provider_name",
+        "refresh_provider_token",
+        "get_provider_authorization",
+        "process_provider_authorization",
+        "approve_provider_authorization",
+        "reject_provider_authorization",
+        "get_stats",
         "ban_ip",
         "unban_ip",
         "get_ban_status",

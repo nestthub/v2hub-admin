@@ -9,6 +9,7 @@ signature headers that AdminAuthenticator attaches to each request.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
 import httpx
 import pytest
@@ -327,6 +328,84 @@ class TestWhitelistManagement:
             result = await client.list_whitelist()
 
         assert result.entries == []
+
+
+class TestUsageStatistics:
+    @respx.mock
+    async def test_get_stats_without_arguments(self) -> None:
+        """No filters -> the query string is empty (params are all None)."""
+        route = respx.get(f"{BASE_URL}/api/v1/admin/stats").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "general": {
+                        "total_users": 1542,
+                        "new_users": 45,
+                        "new_subscriptions": 12,
+                    }
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_stats()
+
+        assert result.general.total_users == 1542
+        sent_url = route.calls[0].request.url
+        assert sent_url.query == b""
+
+    @respx.mock
+    async def test_get_stats_with_period(self) -> None:
+        route = respx.get(f"{BASE_URL}/api/v1/admin/stats").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "general": {
+                        "total_users": 10,
+                        "new_users": 1,
+                        "new_subscriptions": 2,
+                    }
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_stats(period="week")
+
+        assert result.general.new_users == 1
+        sent_params = dict(route.calls[0].request.url.params)
+        assert sent_params == {"period": "week"}
+
+    @respx.mock
+    async def test_get_stats_with_explicit_date_range(self) -> None:
+        route = respx.get(f"{BASE_URL}/api/v1/admin/stats").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "general": {
+                        "total_users": 10,
+                        "new_users": 1,
+                        "new_subscriptions": 2,
+                    }
+                },
+            )
+        )
+        start = datetime(2026, 1, 1)
+        end = datetime(2026, 1, 31)
+        async with make_client() as client:
+            await client.get_stats(start_date=start, end_date=end)
+
+        sent_params = dict(route.calls[0].request.url.params)
+        assert sent_params["start_date"] == start.isoformat()
+        assert sent_params["end_date"] == end.isoformat()
+        assert "period" not in sent_params
+
+    @respx.mock
+    async def test_authentication_error_propagates(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/stats").mock(
+            return_value=httpx.Response(401, json={"message": "Invalid signature"})
+        )
+        async with make_client() as client:
+            with pytest.raises(AuthenticationError):
+                await client.get_stats()
 
 
 class TestGenericErrorHandling:

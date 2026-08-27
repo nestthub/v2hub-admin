@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         IPBanListResponse,
         IPBanStatusResponse,
         IPUnbanResponse,
+        ProviderAuthorizationInfoResponse,
         ProviderCreateResponse,
         ProviderResponse,
         ProviderTokenRefreshResponse,
@@ -224,6 +225,133 @@ class AdminClient:
         """
 
         return self._run(self._async_client.refresh_token(user_id))
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # Provider Authorization Management
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def get_provider_authorization(
+        self,
+        provider_name: str,
+        user_id: int,
+    ) -> ProviderAuthorizationInfoResponse:
+        """
+        Get the authorization status between a provider and a user.
+
+        Args:
+            provider_name: Provider name.
+            user_id: Target user ID.
+
+        Returns:
+            Provider authorization information.
+
+        Raises:
+            NotFoundError: Provider, user, or authorization not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        return self._run(
+            self._async_client.get_provider_authorization(
+                provider_name=provider_name,
+                user_id=user_id,
+            )
+        )
+
+    def process_provider_authorization(
+        self,
+        user_id: int,
+        provider_name: str,
+        hmac: str | None = None,
+    ) -> ProviderAuthorizationInfoResponse:
+        """
+        Process a provider authorization request.
+
+        The HMAC is passed to the server as-is. For a new authorization,
+        the server requires a valid HMAC from an issued connection invite.
+        Existing authorizations can be queried without providing an HMAC.
+
+        Args:
+            user_id: Target user ID.
+            provider_name: Provider name.
+            hmac: Optional authorization HMAC.
+
+        Returns:
+            Provider authorization information.
+
+        Raises:
+            AuthenticationError: Invalid admin secret key or HMAC.
+            NotFoundError: Provider not found.
+            VPNAPIError: Other API errors.
+        """
+        return self._run(
+            self._async_client.process_provider_authorization(
+                user_id=user_id,
+                provider_name=provider_name,
+                hmac=hmac,
+            )
+        )
+
+    def approve_provider_authorization(
+        self,
+        user_id: int,
+        provider_name: str,
+    ) -> ProviderAuthorizationInfoResponse:
+        """
+        Approve a pending provider authorization.
+
+        Only PENDING authorizations can be approved. The server enforces
+        its provider-per-user limit when granting the authorization.
+
+        Args:
+            user_id: Target user ID.
+            provider_name: Provider name.
+
+        Returns:
+            Approved provider authorization.
+
+        Raises:
+            ConflictError: Authorization is not pending, or the user has
+                reached the provider limit.
+            NotFoundError: Provider, user, or authorization not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        return self._run(
+            self._async_client.approve_provider_authorization(
+                user_id=user_id,
+                provider_name=provider_name,
+            )
+        )
+
+    def reject_provider_authorization(
+        self,
+        user_id: int,
+        provider_name: str,
+    ) -> ProviderAuthorizationInfoResponse:
+        """
+        Reject a pending provider authorization.
+
+        Args:
+            user_id: Target user ID.
+            provider_name: Provider name.
+
+        Returns:
+            Resulting provider authorization state. The status is None
+            when the authorization was deleted, or REVOKED when the
+            authorization had existing subscriptions.
+
+        Raises:
+            ConflictError: Authorization is not pending.
+            NotFoundError: Provider, user, or authorization not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        return self._run(
+            self._async_client.reject_provider_authorization(
+                user_id=user_id,
+                provider_name=provider_name,
+            )
+        )
 
     # ═══════════════════════════════════════════════════════════════════════
     # Provider Management
