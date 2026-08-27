@@ -16,7 +16,7 @@ from .access_lists import (
     WhitelistRemoveRequest,
     WhitelistRemoveResponse,
 )
-from .provider_autorization import (
+from .provider_authorization import (
     ProviderAuthorizationBaseRequest,
     ProviderAuthorizationDecisionRequest,
     ProviderAuthorizationInfoResponse,
