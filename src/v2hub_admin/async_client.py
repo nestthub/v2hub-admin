@@ -579,13 +579,13 @@ class AsyncAdminClient:
             Provider authorization information.
 
         Raises:
-            NotFoundError: Provider or user not found.
-            AuthenticationError: Invalid admin credentials.
+            NotFoundError: Provider, user, or authorization not found.
+            AuthenticationError: Invalid admin secret key.
             VPNAPIError: Other API errors.
         """
         response = await self._request(
             "GET",
-            (f"/api/{__api_version__}/admin/providers/auth/{provider_name}/{user_id}"),
+            f"/api/{__api_version__}/admin/providers/auth/{provider_name}/{user_id}",
         )
         return ProviderAuthorizationInfoResponse(**response)
 
@@ -612,7 +612,7 @@ class AsyncAdminClient:
             Provider authorization information.
 
         Raises:
-            AuthenticationError: Invalid admin credentials or HMAC.
+            AuthenticationError: Invalid admin secret key or HMAC.
             NotFoundError: Provider not found.
             VPNAPIError: Other API errors.
         """
@@ -642,7 +642,7 @@ class AsyncAdminClient:
         Approve a pending provider authorization.
 
         Only PENDING authorizations can be approved. The server enforces
-        MAX_PROVIDERS_PER_USER when granting the authorization.
+        its provider-per-user limit when granting the authorization.
 
         Args:
             user_id: Target user ID.
@@ -652,10 +652,10 @@ class AsyncAdminClient:
             Approved provider authorization.
 
         Raises:
-            InvalidAuthorizationStatusError: Authorization is not pending.
-            TooManyProvidersError: User has reached the provider limit.
+            ConflictError: Authorization is not pending, or the user has
+                reached the provider limit.
             NotFoundError: Provider, user, or authorization not found.
-            AuthenticationError: Invalid admin credentials.
+            AuthenticationError: Invalid admin secret key.
             VPNAPIError: Other API errors.
         """
         request = ProviderAuthorizationDecisionRequest(
@@ -689,9 +689,9 @@ class AsyncAdminClient:
             authorization had existing subscriptions.
 
         Raises:
-            InvalidAuthorizationStatusError: Authorization is not pending.
+            ConflictError: Authorization is not pending.
             NotFoundError: Provider, user, or authorization not found.
-            AuthenticationError: Invalid admin credentials.
+            AuthenticationError: Invalid admin secret key.
             VPNAPIError: Other API errors.
         """
         request = ProviderAuthorizationDecisionRequest(

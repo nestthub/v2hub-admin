@@ -158,6 +158,24 @@ class TestSyncClientDelegation:
             result = client.list_whitelist()
         assert result.entries == []
 
+    @respx.mock
+    def test_get_stats(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/stats").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "general": {
+                        "total_users": 1542,
+                        "new_users": 45,
+                        "new_subscriptions": 12,
+                    }
+                },
+            )
+        )
+        with make_sync_client() as client:
+            result = client.get_stats(period="month")
+        assert result.general.total_users == 1542
+
 
 class TestSyncClientWithoutContextManager:
     @respx.mock
