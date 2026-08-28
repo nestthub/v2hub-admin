@@ -68,6 +68,8 @@ with AdminClient(
 ```python
 admin.create_user(user_id: int)
 admin.get_user(user_id: int)
+admin.get_user_providers(user_id: int)
+admin.get_user_provider(user_id: int, provider_name: str)
 admin.delete_user(user_id: int)
 admin.set_user_status(user_id: int, is_active: bool)
 admin.refresh_token(user_id: int)
@@ -91,6 +93,8 @@ print(user.is_active)
 admin.create_provider(owner_hash: str, provider_name: str, provider_url: str | None = None)
 admin.get_provider(provider_hash: str)
 admin.get_providers()
+admin.get_provider_by_name(provider_name: str)
+admin.get_provider_by_owner_id(owner_id: int)
 admin.delete_provider(provider_hash: str)
 admin.set_provider_status(provider_hash: str, is_active: bool)
 admin.update_provider_url(provider_hash: str, provider_url: str | None)
@@ -98,7 +102,7 @@ admin.update_provider_name(provider_hash: str, provider_name: str)
 admin.refresh_provider_token(provider_hash: str)
 ```
 
-Providers are external services (e.g. bots, resellers) that manage subscriptions on behalf of end-users via `v2hub`'s `as_provider_for_user_id=` argument. This section covers the _admin_-side lifecycle of provider accounts themselves — creating them, rotating their tokens, enabling/disabling them.
+Providers are external services (e.g. bots, resellers) that manage subscriptions on behalf of end-users via `v2hub`'s `as_provider_for_user_id=` argument. This section covers the _admin_-side lifecycle of provider accounts themselves — creating them, rotating their tokens, enabling/disabling them. Providers can also be looked up by provider name or owner user ID.
 
 ### Example
 

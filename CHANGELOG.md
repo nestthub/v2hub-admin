@@ -9,6 +9,18 @@ Reconstructed from the git history of [`nestthub/v2hub-admin`](https://github.co
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-08-28
+
+### Added
+
+- Added provider lookup methods to both `AsyncAdminClient` and `AdminClient`:
+  - `get_provider_by_name(provider_name)`
+  - `get_provider_by_owner_id(owner_id)`
+- Added user provider lookup methods:
+  - `get_user_providers(user_id)`
+  - `get_user_provider(user_id, provider_name)`
+- Added test coverage for all new provider and user-provider lookup methods.
+
 ## [1.1.3] - 2026-08-27
 
 ### Added

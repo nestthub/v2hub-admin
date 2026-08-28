@@ -64,6 +64,94 @@ class TestSyncProviderDelegation:
         assert result.provider_name == "vpn123"
 
     @respx.mock
+    def test_get_provider_by_name(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/providers/name/vpn123").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_hash": "p-hash",
+                    "owner_hash": "o-hash",
+                    "provider_name": "vpn123",
+                    "api_token": "p-hash:token",
+                    "provider_url": "https://example.com",
+                    "is_active": True,
+                },
+            )
+        )
+        with make_sync_client() as client:
+            result = client.get_provider_by_name("vpn123")
+
+        assert result.provider_name == "vpn123"
+        assert result.provider_hash == "p-hash"
+
+    @respx.mock
+    def test_get_provider_by_owner(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/providers/owner/12345").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_hash": "p-hash",
+                    "owner_hash": "o-hash",
+                    "provider_name": "vpn123",
+                    "api_token": "p-hash:token",
+                    "provider_url": "https://example.com",
+                    "is_active": True,
+                },
+            )
+        )
+        with make_sync_client() as client:
+            result = client.get_provider_by_owner_id(12345)
+
+        assert result.provider_name == "vpn123"
+        assert result.owner_hash == "o-hash"
+
+    @respx.mock
+    def test_get_user_providers(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "connections": [
+                        {
+                            "provider_name": "vpn123",
+                            "provider_url": "https://example.com",
+                            "is_authorized": True,
+                            "status": "approved",
+                        },
+                    ],
+                },
+            )
+        )
+        with make_sync_client() as client:
+            result = client.get_user_providers(12345)
+
+        assert len(result.connections) == 1
+        assert result.connections[0].provider_name == "vpn123"
+        assert result.connections[0].is_authorized is True
+        assert result.connections[0].status == "approved"
+
+    @respx.mock
+    def test_get_user_provider(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers/vpn123").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_name": "vpn123",
+                    "provider_url": "https://example.com",
+                    "is_authorized": True,
+                    "status": "approved",
+                },
+            )
+        )
+        with make_sync_client() as client:
+            result = client.get_user_provider(12345, "vpn123")
+
+        assert result.provider_name == "vpn123"
+        assert result.provider_url == "https://example.com"
+        assert result.is_authorized is True
+        assert result.status == "approved"
+
+    @respx.mock
     def test_delete_provider(self) -> None:
         route = respx.delete(f"{BASE_URL}/api/v1/admin/providers/p-hash").mock(
             return_value=httpx.Response(204)

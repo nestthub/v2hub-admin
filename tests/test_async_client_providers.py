@@ -120,6 +120,187 @@ class TestProviderManagement:
         assert result.provider_name == "vpn123"
 
     @respx.mock
+    async def test_get_provider_by_name(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/providers/name/vpn123").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_hash": "p-hash",
+                    "owner_hash": "o-hash",
+                    "provider_name": "vpn123",
+                    "api_token": "p-hash:token",
+                    "provider_url": "https://t.me/examplebot",
+                    "is_active": True,
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_provider_by_name("vpn123")
+
+        assert result.provider_hash == "p-hash"
+        assert result.owner_hash == "o-hash"
+        assert result.provider_name == "vpn123"
+        assert result.api_token == "p-hash:token"
+        assert result.provider_url == "https://t.me/examplebot"
+        assert result.is_active is True
+
+    @respx.mock
+    async def test_get_provider_by_name_not_found_raises(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/providers/name/missing").mock(
+            return_value=httpx.Response(404, json={"message": "Provider not found"})
+        )
+        async with make_client() as client:
+            with pytest.raises(NotFoundError):
+                await client.get_provider_by_name("missing")
+
+    @respx.mock
+    async def test_get_provider_by_owner(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/providers/owner/12345").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_hash": "p-hash",
+                    "owner_hash": "o-hash",
+                    "provider_name": "vpn123",
+                    "api_token": "p-hash:token",
+                    "provider_url": "https://t.me/examplebot",
+                    "is_active": True,
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_provider_by_owner_id(12345)
+
+        assert result.provider_hash == "p-hash"
+        assert result.owner_hash == "o-hash"
+        assert result.provider_name == "vpn123"
+        assert result.api_token == "p-hash:token"
+        assert result.provider_url == "https://t.me/examplebot"
+        assert result.is_active is True
+
+    @respx.mock
+    async def test_get_provider_by_owner_not_found_raises(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/providers/owner/99999").mock(
+            return_value=httpx.Response(404, json={"message": "User not found"})
+        )
+        async with make_client() as client:
+            with pytest.raises(NotFoundError):
+                await client.get_provider_by_owner_id(99999)
+
+    @respx.mock
+    async def test_get_user_providers(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "connections": [
+                        {
+                            "provider_name": "vpn123",
+                            "provider_url": "https://t.me/examplebot",
+                            "is_authorized": True,
+                            "status": "approved",
+                        },
+                        {
+                            "provider_name": "vpn456",
+                            "provider_url": None,
+                            "is_authorized": False,
+                            "status": "pending",
+                        },
+                    ]
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_user_providers(12345)
+
+        assert len(result.connections) == 2
+
+        first = result.connections[0]
+        assert first.provider_name == "vpn123"
+        assert first.provider_url == "https://t.me/examplebot"
+        assert first.is_authorized is True
+        assert first.status == "approved"
+
+        second = result.connections[1]
+        assert second.provider_name == "vpn456"
+        assert second.provider_url is None
+        assert second.is_authorized is False
+        assert second.status == "pending"
+
+    @respx.mock
+    async def test_get_user_providers_empty(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers").mock(
+            return_value=httpx.Response(
+                200,
+                json={"connections": []},
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_user_providers(12345)
+
+        assert result.connections == []
+
+    @respx.mock
+    async def test_get_user_providers_not_found_raises(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/99999/providers").mock(
+            return_value=httpx.Response(404, json={"message": "User not found"})
+        )
+        async with make_client() as client:
+            with pytest.raises(NotFoundError):
+                await client.get_user_providers(99999)
+
+    @respx.mock
+    async def test_get_user_provider(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers/vpn123").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_name": "vpn123",
+                    "provider_url": "https://t.me/examplebot",
+                    "is_authorized": True,
+                    "status": "approved",
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_user_provider(12345, "vpn123")
+
+        assert result.provider_name == "vpn123"
+        assert result.provider_url == "https://t.me/examplebot"
+        assert result.is_authorized is True
+        assert result.status == "approved"
+
+    @respx.mock
+    async def test_get_user_provider_not_connected(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers/vpn123").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "provider_name": "vpn123",
+                    "provider_url": "https://t.me/examplebot",
+                    "is_authorized": False,
+                    "status": None,
+                },
+            )
+        )
+        async with make_client() as client:
+            result = await client.get_user_provider(12345, "vpn123")
+
+        assert result.provider_name == "vpn123"
+        assert result.provider_url == "https://t.me/examplebot"
+        assert result.is_authorized is False
+        assert result.status is None
+
+    @respx.mock
+    async def test_get_user_provider_not_found_raises(self) -> None:
+        respx.get(f"{BASE_URL}/api/v1/admin/users/12345/providers/missing").mock(
+            return_value=httpx.Response(404, json={"message": "Provider not found"})
+        )
+        async with make_client() as client:
+            with pytest.raises(NotFoundError):
+                await client.get_user_provider(12345, "missing")
+
+    @respx.mock
     async def test_get_provider_not_found_raises(self) -> None:
         respx.get(f"{BASE_URL}/api/v1/admin/providers/missing").mock(
             return_value=httpx.Response(404, json={"message": "Provider not found"})

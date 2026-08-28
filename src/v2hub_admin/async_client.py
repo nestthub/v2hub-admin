@@ -14,6 +14,7 @@ from urllib.parse import urlencode
 from v2hub import __api_version__
 from v2hub.core.retry import RetryConfig, with_async_retry
 from v2hub.http.client import HTTPClient
+from v2hub.models import ConnectionResponse, ConnectionsResponse
 
 from .auth import AdminAuthenticator
 from .models import (
@@ -385,6 +386,108 @@ class AsyncAdminClient:
             f"/api/{__api_version__}/admin/providers/{provider_hash}",
         )
         return ProviderResponse(**response)
+
+    @with_async_retry()
+    async def get_provider_by_name(
+        self,
+        provider_name: str,
+    ) -> ProviderResponse:
+        """
+        Get provider information by provider name.
+
+        Args:
+            provider_name: Provider name.
+
+        Returns:
+            Provider data including API token and account status.
+
+        Raises:
+            NotFoundError: Provider not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        response = await self._request(
+            "GET",
+            f"/api/{__api_version__}/admin/providers/name/{provider_name}",
+        )
+        return ProviderResponse(**response)
+
+    @with_async_retry()
+    async def get_provider_by_owner_id(
+        self,
+        owner_id: int,
+    ) -> ProviderResponse:
+        """
+        Get provider information by owner user ID.
+
+        Args:
+            owner_id: User ID of the provider owner.
+
+        Returns:
+            Provider data including API token and account status.
+
+        Raises:
+            NotFoundError: User or provider not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        response = await self._request(
+            "GET",
+            f"/api/{__api_version__}/admin/providers/owner/{owner_id}",
+        )
+        return ProviderResponse(**response)
+
+    @with_async_retry()
+    async def get_user_providers(
+        self,
+        user_id: int,
+    ) -> ConnectionsResponse:
+        """
+        Get provider connections for a user.
+
+        Args:
+            user_id: External user ID.
+
+        Returns:
+            User's provider connections and authorization statuses.
+
+        Raises:
+            NotFoundError: User not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        response = await self._request(
+            "GET",
+            f"/api/{__api_version__}/admin/users/{user_id}/providers",
+        )
+        return ConnectionsResponse(**response)
+
+    @with_async_retry()
+    async def get_user_provider(
+        self,
+        user_id: int,
+        provider_name: str,
+    ) -> ConnectionResponse:
+        """
+        Get a specific provider connection for a user.
+
+        Args:
+            user_id: External user ID.
+            provider_name: Provider name.
+
+        Returns:
+            Provider information and the user's authorization status.
+
+        Raises:
+            NotFoundError: User or provider not found.
+            AuthenticationError: Invalid admin secret key.
+            VPNAPIError: Other API errors.
+        """
+        response = await self._request(
+            "GET",
+            (f"/api/{__api_version__}/admin/users/{user_id}/providers/{provider_name}"),
+        )
+        return ConnectionResponse(**response)
 
     @with_async_retry()
     async def delete_provider(self, provider_hash: str) -> None:
